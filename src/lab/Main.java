@@ -3,6 +3,7 @@ package lab;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import secret.Server;
 import secret.EvilBusinessLogic;
@@ -11,25 +12,24 @@ import secret.Request;
 public class Main {
 	public static void main(String[] args) {
 		Server server = new Server();
+		ThreadPoolExecutor pool = new ThreadPoolExecutor(4, 4, 0L, java.util.concurrent.TimeUnit.MILLISECONDS, new java.util.concurrent.LinkedBlockingQueue<>());
 		try {
 			server.listen(1234);
 		} catch (IOException e) {
 			System.err.println("Failed to bind to socket");
+			pool.shutdown();
 			System.exit(1);
 		}
 		while (true) {
 			try {
 				Request request = server.acceptConnection();
-
-				Thread thread = new Thread(() -> handleRequest(request));
-				thread.start();
-
+				pool.submit(() -> handleRequest(request));
 			} catch (IOException e) {
 				System.err.println("Error accepting request");
+				pool.shutdown();
 				e.printStackTrace();
 			}
 		}
-
 	}
 
 	public static void handleRequest(Request request) {
