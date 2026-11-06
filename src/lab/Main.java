@@ -20,7 +20,9 @@ public class Main {
 		while (true) {
 			try {
 				Request request = server.acceptConnection();
-				handleRequest(request);
+
+				Thread thread = new Thread(() -> handleRequest(request));
+				thread.start();
 
 			} catch (IOException e) {
 				System.err.println("Error accepting request");
